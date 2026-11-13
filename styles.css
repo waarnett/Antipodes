@@ -1,0 +1,256 @@
+:root {
+  --bg: #f6f7f9;
+  --text: #1d2430;
+  --muted: #5d6675;
+  --border: #d5dae2;
+  --clicked: #c8873a;
+  --antipode: #3f7fd0;
+  --overlap: #2f3d33;
+  --lodging: #c2185b;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+header { padding: 16px 20px 10px; }
+header h1 { margin: 0 0 4px; font-size: 22px; }
+header p { margin: 0; color: var(--muted); }
+
+.world-map {
+  height: 62vh;
+  min-height: 360px;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Legend is moved inside the world map as a map control. */
+.legend {
+  margin: 0 0 24px 10px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  font-size: 13px;
+}
+.legend div { display: flex; align-items: center; gap: 8px; }
+.swatch { width: 22px; height: 12px; border-radius: 2px; opacity: 0.55; }
+.swatch.anti { background: var(--antipode); }
+.swatch.overlap { background: var(--overlap); }
+
+.pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 520px));
+  justify-content: center;
+  gap: 24px;
+  padding: 20px 16px 8px;
+}
+.pair[hidden] { display: none; }
+@media (max-width: 760px) {
+  .pair { grid-template-columns: minmax(0, 520px); }
+}
+
+/* Title on the left, center latitude / longitude on the right, above each small map. */
+.panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2px 12px;
+  margin: 0 0 8px;
+}
+.panel h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 17px;
+}
+
+.map-wrap { position: relative; }
+.small-map {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+/* Fixed marker at the center of each small map. */
+.crosshair {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 28px;
+  height: 28px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.55);
+}
+.crosshair::before, .crosshair::after {
+  content: "";
+  position: absolute;
+  background: #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55);
+}
+.crosshair::before { left: 50%; top: -9px; bottom: -9px; width: 2px; transform: translateX(-50%); }
+.crosshair::after { top: 50%; left: -9px; right: -9px; height: 2px; transform: translateY(-50%); }
+
+.coords {
+  font-variant-numeric: tabular-nums;
+  font-size: 15px;
+  white-space: nowrap;
+}
+
+/* "Whole world" button inside the world map. */
+.map-button {
+  margin: 10px 0;
+  padding: 0 12px;
+  height: 40px;
+  border: 0;
+  border-radius: 2px;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+}
+.map-button:hover { background: #eef2f7; }
+
+button.open, .types button {
+  font: inherit;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text);
+}
+button.open { margin-top: 10px; padding: 6px 12px; border-radius: 6px; }
+button.open:hover { background: #eef2f7; }
+
+/* Map type switcher shown inside each small map. */
+.types {
+  display: flex;
+  margin: 10px;
+  border-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+.types button { border: 0; padding: 6px 10px; font-size: 13px; }
+.types button + button { border-left: 1px solid var(--border); }
+.types button[aria-pressed="true"] { background: #1d2430; color: #fff; }
+
+.dot {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
+}
+.dot.clicked { background: var(--clicked); }
+.dot.antipode { background: var(--antipode); }
+
+/* Viewer's own location (and its antipode) on every map. The outer span is a
+   transparent click area larger than the dot, centered on the position
+   (markers anchor bottom-center). */
+.you-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  transform: translateY(50%);
+  cursor: pointer;
+}
+/* Google-style blue dot with a halo. */
+.you-dot {
+  display: block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #1a73e8;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 7px rgba(26, 115, 232, 0.25), 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+/* Antipode of the viewer's location: the same dot, hollow. */
+.you-dot.anti {
+  background: #fff;
+  border: 4px solid #1a73e8;
+}
+/* World-map markers: center the dot on its position (markers anchor bottom-center). */
+.world-dot { transform: translateY(50%); }
+
+/* Hotel / overnight accommodation markers on the small maps (centered on their position). */
+.lodging {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--lodging);
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.45);
+  transform: translateY(50%);
+  cursor: pointer;
+}
+.lodging svg { width: 12px; height: 12px; fill: #fff; }
+/* Marker whose place card is open below the map. */
+.lodging.selected {
+  transform: translateY(50%) scale(1.4);
+  box-shadow: 0 0 0 2px var(--text), 0 2px 6px rgba(0, 0, 0, 0.45);
+}
+
+/* Google place card shown below a small map when one of its lodging markers is clicked. */
+.place {
+  position: relative;
+  margin-top: 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fff;
+}
+.place gmp-place-details { width: 100%; margin: 0; border: none; }
+.place-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 1;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+.place-close:hover { background: #eef2f7; }
+
+footer { padding: 16px 20px 24px; color: var(--muted); font-size: 13px; text-align: center; }
+
+/* First-visit dialog asking for the Google Maps API key. */
+.key-dialog {
+  width: min(440px, calc(100vw - 32px));
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 18px 20px;
+  color: var(--text);
+}
+.key-dialog::backdrop { background: rgba(0, 0, 0, 0.35); }
+.key-dialog h2 { margin: 0 0 6px; font-size: 17px; }
+.key-dialog p { margin: 0 0 12px; color: var(--muted); }
+.key-dialog .key-rejected { color: #b3261e; }
+.key-dialog input { width: 100%; padding: 6px 8px; font: inherit; }
+.key-dialog button { display: block; margin: 12px 0 0 auto; padding: 6px 14px; }
